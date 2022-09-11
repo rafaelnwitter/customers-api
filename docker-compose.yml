@@ -26,9 +26,9 @@ services:
     networks:
       - postgres
   
-  redis-cache:
+  redis-customer:
     image: redis:alpine
-    container_name: redis-server
+    container_name: redis-customer
     networks:
       - postgres
     ports:

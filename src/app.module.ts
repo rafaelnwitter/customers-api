@@ -4,9 +4,11 @@ import * as Joi from 'joi';
 import { HealthModule } from './health/health.module';
 import { CustomerModule } from './customer/customer.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
-import { AuthorizationModule } from './authorization/authorization.module';
-import { NestCacheModule } from './cache/cache.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthenticationModule } from './authorization/authorization.module';
+import { RedisCacheModule } from './cache/cache.module';
+// import { AuthModule } from './auth/auth.module';
+import { KeycloakModule } from './keycloak/keycloak.module';
+import { PrismaModule } from './prisma/prisma.module';
 
 @Module({
   imports: [
@@ -29,16 +31,18 @@ import { AuthModule } from './auth/auth.module';
     }),
     HealthModule,
     CustomerModule,
-    AuthorizationModule,
-    NestCacheModule,
-    AuthModule,
+    AuthenticationModule,
+    RedisCacheModule,
+    // AuthModule,
+    PrismaModule,
+ //   KeycloakModule,
   ],
   controllers: [],
   providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // {
+    //   provide: APP_INTERCEPTOR,
+    //   useClass: CacheInterceptor,
+    // },
   ],
 })
 export class AppModule {}

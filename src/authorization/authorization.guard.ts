@@ -1,45 +1,45 @@
-// import {
-//   CanActivate,
-//   ExecutionContext,
-//   Injectable,
-//   UnauthorizedException,
-// } from '@nestjs/common';
-// import { expressJwtSecret } from 'jwks-rsa';
-// import { promisify } from 'util';
-// import * as jwt from 'express-jwt';
-// import { ConfigService } from '@nestjs/config';
+import {
+  CanActivate,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+  Injectable,
+} from '@nestjs/common';
 
-// @Injectable()
-// export class AuthorizationGuard implements CanActivate {
-//   private API_ROUTE: string;
-//   private API_DOMAIN: string;
+import { AuthenticationService } from './authorization.service';
+import { Request } from 'express';
 
-//   constructor(private configService: ConfigService) {
-//     this.API_ROUTE = this.configService.get('API_ROUTE');
-//     this.API_DOMAIN = this.configService.get('API_DOMAIN');
-//   }
-//   // async canActivate(context: ExecutionContext): Promise<boolean> {
-//   //   const req = context.getArgByIndex(0);
-//   //   const res = context.getArgByIndex(1);
-//   //   const checkJwt = promisify(
-//   //     jwt({
-//   //       secret: expressJwtSecret({
-//   //         cache: true,
-//   //         rateLimit: true,
-//   //         jwksRequestsPerMinute: 10,
-//   //         jwksUri: `${this.API_DOMAIN}.well-know`,
-//   //       }),
-//   //       audience: this.API_DOMAIN,
-//   //       issuer: this.API_DOMAIN,
-//   //       alghoritms: ['RS256'],
-//   //     }),
-//   //   );
+@Injectable()
+export class AuthenticationGuard implements CanActivate {
+  constructor(private readonly authenticationService: AuthenticationService) {}
 
-//   //   try {
-//   //     await checkJwt(req, res);
-//   //     return true;
-//   //   } catch (error) {
-//   //     throw new UnauthorizedException(error);
-//   //   }
-//   // }
-// }
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request: Request = context.switchToHttp().getRequest();
+
+    const header = request.header('Authorization');
+    if (!header) {
+      throw new HttpException(
+        'Authorization: Bearer <token> header missing',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const parts = header.split(' ');
+    if (parts.length !== 2 || parts[0] !== 'Bearer') {
+      throw new HttpException(
+        'Authorization: Bearer <token> header invalid',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const token = parts[1];
+
+    try {
+      // Store the user on the request object if we want to retrieve it from the controllers
+      request['user'] = await this.authenticationService.authenticate();
+      return true;
+    } catch (e) {
+      throw new HttpException(e.message, HttpStatus.UNAUTHORIZED);
+    }
+  }
+}

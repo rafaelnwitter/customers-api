@@ -1,4 +1,12 @@
+import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 
-@Module({})
-export class AuthorizationModule {}
+import { AuthenticationGuard } from './authorization.guard';
+import { AuthenticationService } from './authorization.service';
+
+@Module({
+  imports: [HttpModule],
+  providers: [AuthenticationGuard, AuthenticationService],
+  exports: [AuthenticationService],
+})
+export class AuthenticationModule {}

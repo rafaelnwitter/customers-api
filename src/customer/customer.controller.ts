@@ -14,22 +14,27 @@ import {
   Response,
   Res,
   UseInterceptors,
+  UseGuards,
 } from '@nestjs/common';
 import { EventPattern } from '@nestjs/microservices';
 import { AxiosResponse } from '@nestjs/terminus/dist/health-indicator/http/axios.interfaces';
 import { Cache } from 'cache-manager';
+import { Roles } from 'nest-keycloak-connect';
+import { AuthenticationGuard } from '../authorization/authorization.guard';
+import { RedisCacheService } from '../cache/cache.service';
 import { CustomerService } from './customer.service';
 import LogInDto from './dto/login-customer.dto';
 import RegisterCustomerDto from './dto/register-customer.dto';
+import jwt from 'jsonwebtoken';
 
+// @UseGuards(AuthenticationGuard)
 @Controller('customers')
 export class CustomerController {
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     private readonly service: CustomerService,
+    private cacheService: RedisCacheService,
   ) {}
-  
-  @UseInterceptors(CacheInterceptor) // Automatically cache the response for this endpoint
+
   @CacheKey('customer')
   @Get('/:id')
   async getCustomer(@Param('id') uuid: string): Promise<string> {
@@ -37,12 +42,27 @@ export class CustomerController {
   }
 
   @Get()
-  async logIn(@Req() request: Request) {
-    return this.service.getLoginToken();
+  async logIn(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ) {
+   // console.log(request);
+    // console.log(response);
+    const payload = this.service.getLoginToken(request);
+    const jwt_sign = jwt.
   }
 
-  @Post()
-  async registerCustomer(@Body() data: RegisterCustomerDto) {
-    return this.service.newCustomer(data);
+  @Get('oi')
+  oiteste(): string {
+    return `${this.service.getHello()} from admin`;
+  }
+
+  @Get('da')
+  async registerCustomer(
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+    @Body() data: RegisterCustomerDto) {
+      console.log(request);
+      return this.service.newCustomer(data);
   }
 }

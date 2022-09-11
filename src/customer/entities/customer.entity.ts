@@ -1,10 +1,6 @@
-import {
-    Entity,
-    Property,
-    PrimaryKey
-  } from '@mikro-orm/core';
+import { Entity, Property, PrimaryKey } from '@mikro-orm/core';
 import { v4 } from 'uuid';
-  
+
 @Entity({ tableName: 'customer' })
 class Customer {
   @PrimaryKey()

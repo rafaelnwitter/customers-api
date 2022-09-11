@@ -1,4 +1,4 @@
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { CacheInterceptor, Logger, ValidationPipe } from '@nestjs/common';
 import {
   ExpressAdapter,
   NestExpressApplication,
@@ -13,6 +13,8 @@ import { ssl } from './ssl';
 import * as fs from 'fs';
 import express from 'express';
 import session from 'express-session';
+import bodyParser from 'body-parser';
+import cors from 'cors';
 
 // New logger instance
 const logger = new Logger('Main');
@@ -36,14 +38,6 @@ async function bootstrap() {
   const server = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
   app.useGlobalPipes(new ValidationPipe());
-  // app.use(
-  //   session({
-  //     secret: 'keyboard cat',
-  //     resave: false,
-  //     saveUninitialized: true,
-  //     cookie: { secure: true },
-  //   }),
-  // );
   app.use(cookieParser());
   app.enableCors({
     origin: true,
@@ -52,15 +46,8 @@ async function bootstrap() {
   });
   app.use(csurf({ cookie: { sameSite: true } }));
 
-  app.use((req: any, res: any, next: any) => {
-    const token = req.csrfToken();
-    res.cookie('XSRF-TOKEN', token);
-    res.locals.csrfToken = token;
-    // req.locals.csrfToken = token;
-    // console.log(req.header);
-    req.header('Set-Cookie');
-    next();
-  });
+  app.use(cors());
+  app.use(bodyParser.json());
   await app.listen(3000);
   console.log(`Application is running on: ${await app.getUrl()}`);
 }

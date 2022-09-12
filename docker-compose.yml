@@ -1,51 +1,50 @@
 version: "3"
 services:
-  postgres:
-    container_name: customer-postgres
-    image: postgres:latest
+  nest-customer:
+    build:
+      context: ./
+      dockerfile: ./Dockerfile
+    image: nestjs-customer
+    container_name: nestjs-customer
     ports:
-      - "5432:5432"
+      - "3000:3000"
+    links:
+      - redis-customer
     volumes:
-      - /data/postgres:/data/postgres
-    env_file:
-      - .env
+      - .:/app
+      - /app/node_modules
     networks:
       - postgres
 
-  pgadmin:
-    links:
-      - postgres:postgres
-    container_name: customer-pgadmin
-    image: dpage/pgadmin4
-    ports:
-      - "8080:80"
-    volumes:
-      - /data/pgadmin:/root/.pgadmin
-    env_file:
-      - .env
-    networks:
-      - postgres
-  
   redis-customer:
     image: redis:alpine
     container_name: redis-customer
-    networks:
-      - postgres
+    environment:
+      - REDIS_HOST=20.221.82.150
     ports:
       - "6379:6379"
+    networks:
+      - postgres
     command: redis-server --save 20 1 --loglevel warning
 
   redis-commander:
     image: rediscommander/redis-commander:latest
+    container_name: redis-commander
     env_file: .env
     environment:
-      - REDIS_HOSTS=localhost:6379
-    networks:
-      - postgres
+      - REDIS_HOST=20.221.82.150
+      - REDIS_PORT=6379
+      - PORT=8081
     ports:
       - "8081:8081"
     depends_on:
         - redis-customer
+    networks:
+      - postgres
+
+volumes:
+  redis-customer:
+    driver: local
 
 networks:
   postgres:

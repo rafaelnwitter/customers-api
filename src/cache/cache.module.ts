@@ -1,8 +1,8 @@
 import { CacheInterceptor, CacheModule, Global, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_INTERCEPTOR } from '@nestjs/core';
+import { CacheService } from './cache.service';
 import redisStore from 'cache-manager-redis-store';
-import { Customer } from 'src/customer/entities/customer.interface';
 
 @Global()
 @Module({
@@ -23,8 +23,9 @@ import { Customer } from 'src/customer/entities/customer.interface';
   providers: [
     {
       provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor
-    }
+      useClass: CacheInterceptor,
+    },
+    CacheService,
   ],
 })
 export class RedisCacheModule {}

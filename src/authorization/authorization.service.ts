@@ -2,8 +2,8 @@ import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import getAuthTokenDTO from 'src/customer/dto/login-customer.dto';
-
-import { Role, User } from './interface/user.model';
+import qs from 'qs';
+import { User } from './interface/user.model';
 
 export class AuthenticationError extends Error {}
 
@@ -40,21 +40,7 @@ export class AuthenticationService {
         'Content-Type': 'application/x-www-form-urlencoded',
         'X-XSS-Protection': '1',
       },
-      data: `grant_type=${getCredentialsDto.grant_type}',
-      )}&client_id=${
-        getCredentialsDto.client_id || this.configService.get('CLIENT_ID')
-      }&client_secret=${
-        getCredentialsDto.client_secret ||
-        this.configService.get('CLIENT_SECRET')
-      }&username=${
-        getCredentialsDto.email || this.configService.get('USERNAME')
-      }&password=${
-        Buffer.from(getCredentialsDto.email).toString('base64') ||
-        this.configService.get('PASSWORD')
-      }&response_type=code&scope=${
-        getCredentialsDto.scope || this.configService.get('SCOPE')
-      }`,
-    };
+      data: `grant_type=${this.configService.get('GRANT_TYPE')}&client_id=${getCredentialsDto.client_id||this.configService.get('CLIENT_ID')}&client_secret=${getCredentialsDto.client_secret||this.configService.get('CLIENT_SECRET')}&username=${getCredentialsDto.email||this.configService.get('USERNAME')}&password=${this.configService.get('PASSWORD')||Buffer.from(getCredentialsDto.email).toString('base64')}&response_type=code&scope=${this.configService.get('SCOPE')||getCredentialsDto.scope}`};
     let resp;
     await this.httpService.axiosRef
       .request(options)
@@ -78,10 +64,10 @@ export class AuthenticationService {
    * If it fails, the token is invalid or expired
    */
   async authenticate(accessToken?: string): Promise<User> {
-    const url = `${this.baseURL}/realms/${this.realm}/protocol/openid-connect/token`;
+    const url = `${this.configService.get('API_DOMAIN')}/realms/${this.configService.get('REALM')}/protocol/openid-connect/auth?`;
 
     try {
-      const response = await this.httpService.axiosRef.get<User>(url, {
+      const response = await this.httpService.axiosRef.post<User>(url, {
         headers: {
           authorization: `Bearer ${accessToken}`,
         },

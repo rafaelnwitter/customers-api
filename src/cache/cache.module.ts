@@ -1,8 +1,16 @@
-import { CacheInterceptor, CacheModule, Global, Module } from '@nestjs/common';
+import {
+  CacheModule,
+  CACHE_MANAGER,
+  Global,
+  Inject,
+  Logger,
+  Module,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_INTERCEPTOR } from '@nestjs/core';
 import { CacheService } from './cache.service';
 import redisStore from 'cache-manager-redis-store';
+import { Cache } from 'cache-manager';
 
 @Global()
 @Module({
@@ -11,21 +19,27 @@ import redisStore from 'cache-manager-redis-store';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         store: redisStore,
-        url: configService.get('REDIS_URL'),
-        ttl: configService.get<number>('redis.ttl', 100),
+        host: configService.get('REDIS_HOST'),
+        port: configService.get('REDIS_PORT'),
+        ttl: 360 * 100 * 10,
         db: 0,
         isGlobal: true,
       }),
       inject: [ConfigService],
     }),
   ],
-  exports: [RedisCacheModule, CacheModule],
+  exports: [RedisCacheModule, CacheService],
   providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: CacheInterceptor,
-    },
+    // {
+    // provide: APP_INTERCEPTOR,
+    // useClass: CacheInterceptor,
+    // },
     CacheService,
   ],
 })
-export class RedisCacheModule {}
+export class RedisCacheModule implements OnModuleInit {
+  constructor(@Inject(CACHE_MANAGER) private readonly cache: Cache) {}
+  public onModuleInit() {
+    const logger = new Logger('Cache');
+  }
+}

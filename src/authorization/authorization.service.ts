@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import getAuthTokenDTO from 'src/customer/dto/login-customer.dto';
 import qs from 'qs';
 import { User } from './interface/user.model';
+import * as jwt from 'jsonwebtoken'
+import { userInfo } from 'os';
 
 export class AuthenticationError extends Error {}
 
@@ -66,20 +68,20 @@ export class AuthenticationService {
   async authenticate(accessToken?: string): Promise<User> {
     const url = `${this.configService.get('API_DOMAIN')}/realms/${this.configService.get('REALM')}/protocol/openid-connect/auth?`;
 
-    try {
-      const response = await this.httpService.axiosRef.post<User>(url, {
-        headers: {
-          authorization: `Bearer ${accessToken}`,
-        },
-      });
-
+    // try {
+      // const response = await this.httpService.axiosRef.post<User>(url, {
+        // headers: {
+          // authorization: `Bearer ${accessToken}`,
+        // },
+      // });
+      const response = jwt.decode(accessToken);
       return {
-        sub: response.data.sub,
+        sub = response['sub']: User.sub,
         preferred_username: response.data.preferred_username,
         resource_access: [response.data.resource_access['customers']],
       };
     } catch (e) {
       throw new AuthenticationError(e.message);
     }
-  }
 }
+
